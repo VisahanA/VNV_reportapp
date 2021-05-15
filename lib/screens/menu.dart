@@ -5,28 +5,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vnv_report/screens/outlets.dart';
 import 'package:vnv_report/screens/sales.dart';
-import 'package:vnv_report/services/apifetch.dart';
+import 'package:vnv_report/services/Mainclass.dart';
 import 'package:http/http.dart' as http;
-import 'package:vnv_report/services/theme.dart';
+import 'package:json_table/json_table.dart';
 
-int i=0;
-int index=0;
+int value=0;
 
-Future<Album>   fetchAlbum(int i) async {
-  final response = await http.get('https://visahan.tk/disc.json');
+Future<Mainreports> fetchreport() async {
+  final response = await http.get('https://vnv-cms.herokuapp.com/reports');
   final jsonresponse = json.decode(response.body);
+  value=jsonresponse.length;
   if (response.statusCode == 200) {
-    print(jsonresponse[i]['Question']);
-    return Album.fromJson(jsonresponse[i]);
+    print(Mainreports.fromJsonString(response.body));
+    return Mainreports.fromJsonString(response.body);
   }
   else {
     throw Exception('Failed to fetch api');
   }
 }
 
-Future<Album> futureAlbum;
-Set<int> setOfInts = Set();
-
+Future<Mainreports> futurereport;
 
 class MyHomePage extends StatefulWidget {
   Function(Brightness brightness) changeTheme;
@@ -42,175 +40,58 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String title="VNV report";
+  String name="BurmaBakers";
+  String due_date="07-08-1998";
+  String purchase_date="04-08-1998";
+  String city="VNR";
+  String mobilenumber="7598311776";
+  bool toggle = true;
+
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    while(index<9) {
-      futureAlbum = fetchAlbum(index);
-      index++;
+    futurereport = fetchreport();
+    String jsonSample = "{" + "\"" + "name" + "\":\"" + name + "\"," + "\"" + "duedate" +
+        "\":\"" + due_date + "\"," + "\"" + "purchasedate" + "\":\"" +
+        purchase_date + "\"," + "\"" + "mobilenumber" + "\":\"" +
+        mobilenumber + "\"," + "\"" + "city" + "\":\"" + city + "\"}";
+    int j=0;
+    while(j<4) {
+      if(j==3) {
+        jsonSample="["+jsonSample+"]";
+        break;
+      }
+      jsonSample=jsonSample+","+jsonSample;
+      j++;
     }
-
+    print(jsonSample);
+    var json = jsonDecode(jsonSample);
     return Scaffold(
      // backgroundColor: Color(0xff00BCD1),
       appBar: AppBar(title: Text(title)),
       //Table
       body: Center(
-        child: Column(children: <Widget>[
-        Container(
-        margin: EdgeInsets.all(20),
-        child: Table(
-          defaultColumnWidth: FixedColumnWidth(120),
-          border: TableBorder.all(
-              color: Colors.black,
-              style: BorderStyle.solid,
-              width: 2
-          ),
+        child: toggle
+            ? Column(
           children: [
-            TableRow( children: [
-            Column(
-                children:[
-                  Text('Outlet',
-                      style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold)
-                  )
-                ]
+            JsonTable(
+              json,
+              showColumnToggle: true,
+              allowRowHighlight: true,
+              rowHighlightColor: Colors.yellow[500].withOpacity(0.7),
+              paginationRowCount: 4,
+              onRowSelect: (index, map) {
+                print(index);
+                print(map);
+              },
             ),
-              Column(
-                  children:[
-                    Text('Purchase_date',
-                        style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold)
-                    )
-                  ]
-              ),
-              Column(
-                  children:[
-                    Text('Due_date',
-                        style: TextStyle(fontSize: 16.0,
-                            fontWeight: FontWeight.bold)
-                    )
-                  ]
-              ),
-            ]),
-        TableRow( children: [
-          Column(
-              children:[ Container(
-                padding: const EdgeInsets.all(10.0),
-                child: FutureBuilder<Album>(
-                  future: futureAlbum,
-                  builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        futureAlbum = fetchAlbum(index);
-                        return Text(snapshot.data.option[1],
-                            style: TextStyle(color: Colors.black, fontSize: 14));
-                      } else if (snapshot.hasError) {
-                        return Text("${snapshot.error}");
-                      }
-                    return CircularProgressIndicator();
-                  },
-                ),
-              ),
-              ]
-          ),
-          Column(
-              children:[ Container(
-                padding: const EdgeInsets.all(10.0),
-                child: FutureBuilder<Album>(
-                  future: futureAlbum,
-                  builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return Text(snapshot.data.option[2],
-                            style: TextStyle(color: Colors.black, fontSize: 14));
-                      } else if (snapshot.hasError) {
-                        return Text("${snapshot.error}");
-                      }
-                    return CircularProgressIndicator();
-                  },
-                ),
-              ),
-              ]
-          ),
-          Column(
-              children:[ Container(
-                padding: const EdgeInsets.all(10.0),
-                child: FutureBuilder<Album>(
-                  future: futureAlbum,
-                  builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return Text(snapshot.data.option[3],
-                            style: TextStyle(color: Colors.black, fontSize: 14));
-                      } else if (snapshot.hasError) {
-                        return Text("${snapshot.error}");
-                      }
-                    return CircularProgressIndicator();
-                  },
-                ),
-              ),
-              ]
-          ),
-        ]),
-            TableRow( children: [
-              Column(
-                  children:[ Container(
-                    padding: const EdgeInsets.all(10.0),
-                    child: FutureBuilder<Album>(
-                      future: futureAlbum,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          futureAlbum = fetchAlbum(index);
-                          return Text(snapshot.data.option[1],
-                              style: TextStyle(color: Colors.black, fontSize: 14));
-                        } else if (snapshot.hasError) {
-                          return Text("${snapshot.error}");
-                        }
-                        return CircularProgressIndicator();
-                      },
-                    ),
-                  ),
-                  ]
-              ),
-              Column(
-                  children:[ Container(
-                    padding: const EdgeInsets.all(10.0),
-                    child: FutureBuilder<Album>(
-                      future: futureAlbum,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Text(snapshot.data.option[2],
-                              style: TextStyle(color: Colors.black, fontSize: 14));
-                        } else if (snapshot.hasError) {
-                          return Text("${snapshot.error}");
-                        }
-                        return CircularProgressIndicator();
-                      },
-                    ),
-                  ),
-                  ]
-              ),
-              Column(
-                  children:[ Container(
-                    padding: const EdgeInsets.all(10.0),
-                    child: FutureBuilder<Album>(
-                      future: futureAlbum,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Text(snapshot.data.option[3],
-                              style: TextStyle(color: Colors.black, fontSize: 14));
-                        } else if (snapshot.hasError) {
-                          return Text("${snapshot.error}");
-                        }
-                        return CircularProgressIndicator();
-                      },
-                    ),
-                  ),
-                  ]
-              ),
-            ]),
-            //Tablerow $$$$
+            SizedBox(
+              height: 40.0,
+            ),
           ],
+        )
+            : Center(
+          child: Text(getPrettyJSONString(jsonSample)),
         ),
-      ),
-      ])
       ),
       //MENU
       drawer: Drawer(
@@ -256,6 +137,11 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
      );
+  }
+  String getPrettyJSONString(jsonObject) {
+    JsonEncoder encoder = new JsonEncoder.withIndent('  ');
+    String jsonString = encoder.convert(json.decode(jsonObject));
+    return jsonString;
   }
 }
 
