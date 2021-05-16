@@ -8,23 +8,12 @@ import 'package:vnv_report/screens/sales.dart';
 import 'package:vnv_report/services/Mainclass.dart';
 import 'package:http/http.dart' as http;
 import 'package:json_table/json_table.dart';
+import 'package:vnv_report/services/ReportResponse.dart';
+import 'package:vnv_report/services/reportclass.dart';
 
 int value=0;
 
-Future<Mainreports> fetchreport() async {
-  final response = await http.get('https://vnv-cms.herokuapp.com/reports');
-  final jsonresponse = json.decode(response.body);
-  value=jsonresponse.length;
-  if (response.statusCode == 200) {
-    print(Mainreports.fromJsonString(response.body));
-    return Mainreports.fromJsonString(response.body);
-  }
-  else {
-    throw Exception('Failed to fetch api');
-  }
-}
 
-Future<Mainreports> futurereport;
 
 class MyHomePage extends StatefulWidget {
   Function(Brightness brightness) changeTheme;
@@ -38,33 +27,57 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+
 class _MyHomePageState extends State<MyHomePage> {
-  String title="VNV report";
-  String name="BurmaBakers";
-  String due_date="07-08-1998";
-  String purchase_date="04-08-1998";
-  String city="VNR";
-  String mobilenumber="7598311776";
+  String title="";
+  String name="";
+  String due_date="";
+  String purchase_date="";
+  String city="";
+  String mobilenumber="";
   bool toggle = true;
+  bool showTable = false;
+  List<dynamic> reportList;
+
+  Future<void> fetchreport() async {
+    final response = await http.get('https://vnv-cms.herokuapp.com/reports');
+    final jsonresponse = json.decode(response.body);
+    value=jsonresponse.length;
+    if (response.statusCode == 200) {
+      print(Mainreports.fromJsonString(response.body));
+      processData(Mainreports.fromJsonString(response.body));
+    }
+    else {
+      throw Exception('Failed to fetch api');
+    }
+  }
+
+  void processData(Mainreports mainreports) async {
+    print(mainreports.categories);
+    List<report> listOfReport = mainreports.categories;
+    List<ReportEntry> listOfReportEntries=new List();
+    for(report r in listOfReport){
+      ReportEntry reportEntry = ReportEntry(r.outlet.name, r.due_date, r.purchase_date, r.outlet.city, r.outlet.mobilenumber);
+      listOfReportEntries.add(reportEntry);
+    }
+
+    ReportResponse reportresponse1=ReportResponse(listOfReportEntries);
+    print(reportresponse1.convertToJsonString());
+    String jsonSample = reportresponse1.convertToJsonString();
+    setState(() {
+      showTable = true;
+      reportList = jsonDecode(jsonSample);
+    });
+  }
+
+  @override
+  void initState() {
+    fetchreport();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    futurereport = fetchreport();
-    String jsonSample = "{" + "\"" + "name" + "\":\"" + name + "\"," + "\"" + "duedate" +
-        "\":\"" + due_date + "\"," + "\"" + "purchasedate" + "\":\"" +
-        purchase_date + "\"," + "\"" + "mobilenumber" + "\":\"" +
-        mobilenumber + "\"," + "\"" + "city" + "\":\"" + city + "\"}";
-    int j=0;
-    while(j<4) {
-      if(j==3) {
-        jsonSample="["+jsonSample+"]";
-        break;
-      }
-      jsonSample=jsonSample+","+jsonSample;
-      j++;
-    }
-    print(jsonSample);
-    var json = jsonDecode(jsonSample);
     return Scaffold(
      // backgroundColor: Color(0xff00BCD1),
       appBar: AppBar(title: Text(title)),
@@ -73,8 +86,8 @@ class _MyHomePageState extends State<MyHomePage> {
         child: toggle
             ? Column(
           children: [
-            JsonTable(
-              json,
+            if (showTable) JsonTable(
+              reportList,
               showColumnToggle: true,
               allowRowHighlight: true,
               rowHighlightColor: Colors.yellow[500].withOpacity(0.7),
@@ -90,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         )
             : Center(
-          child: Text(getPrettyJSONString(jsonSample)),
+          child: Text(getPrettyJSONString(reportList)),
         ),
       ),
       //MENU

@@ -1,5 +1,3 @@
-import 'package:vnv_report/screens/outlets.dart';
-
 import 'outletclass.dart';
 
 class report {
